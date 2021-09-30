@@ -84,18 +84,26 @@ module.exports = {
             .send(`Vous êtes le traître. Le mot est : ${mot1}`);
 			map.clear();
       const filter2 = m => m.content.includes(mot1);
-	    const collectormessage = interaction.channel.createMessageCollector({filter2});
+	    const collectormessage = interaction.channel.createMessageCollector({filter2, time: 10000});
 	    
       //collect les réponses 
       collectormessage.on('collect', m => {
-	  	if(m.content === mot1){
-			  collectormessage.stop();
-        return newPollMessage(m, "Vous avez trouvé ", traitre);
-        return false;
-      }
-		});
+	  	  if(m.content === mot1){
+			    collectormessage.stop();
+          return newPollMessage(m, "Vous avez trouvé ", traitre);
+          return false;
+        }
+		  });
 
+      collectormessage.on('end',(m,reason) => {
+        if(reason === 'time'){
+          message.reply('Perdu le temps est écoulé')
+          return false;
+        }
       });
+
+
+    });
 	  
     } catch (error) {
       console.log(error);
