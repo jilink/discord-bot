@@ -1,7 +1,7 @@
 const { SlashCommandBuilder } = require('@discordjs/builders');
 const { isMessageComponentDMInteraction } = require('discord-api-types/utils/v9');
 const { clientId, guildId, token } = require('../config.json');
-let mots = ['chocolat'];
+let mots = ['1'];
 const map = new Map();
 var mot1 = ""; 
 module.exports = {
@@ -88,9 +88,9 @@ module.exports = {
 	  const collectormessage = interaction.channel.createMessageCollector({filter2});
 	  //let mrep = undefined;	 
 	  collectormessage.on('collect', m => {
-		if(m.content === mot1)  
-			m.reply({content : 'Vous avez trouvé le mot', fetchReply: true})
-			m.react("👍").then(() => m.react("🚫"));
+		if(m.content === mot1){
+			newMessage(m, "Vous avez trouvé ");
+    }
 		});
     } catch (error) {
       console.log(error);
@@ -124,3 +124,11 @@ module.exports = {
 */
   },
 };
+
+function newMessage(toReply, message){
+  const m = toReply.reply({content : 'Vous avez trouvé le mot', fetchReply: true})
+  .then((sent)=> {sent.react("👍").then(() => sent.react("🚫"));})
+  
+
+
+}
