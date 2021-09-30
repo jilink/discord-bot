@@ -9,18 +9,18 @@ module.exports = {
     .setName("poto")
     .setDescription("Lance le jeu du traitre"),
   async execute(interaction, client) {
-    const message = await interaction.reply({
+    const message = await interaction.reply({ //Lance le jeu et le bot
       content: "Qui veut jouer ?",
       fetchReply: true,
     });
     const ids = new Set();
-    message.react("👍").then(() => message.react("🚫"));
+    message.react("👍").then(() => message.react("🚫")); //rajoute les réactions pour savoir qui veut jouer
 
     try {
       const filter = (reaction, user) => {
         //console.log(user);
         return (
-          ["👍", "🚫"].includes(reaction.emoji.name) && user.id != clientId
+          ["👍", "🚫"].includes(reaction.emoji.name) && user.id != clientId //filtre qui veut jouer ou non 
         );
       };
       const collector = message.createReactionCollector({
@@ -69,7 +69,7 @@ module.exports = {
           .catch((error) =>
             console.error("Erreur lors de la prise de réactions", error)
           );
-        //console.log( `tableau est  ${tab[0]}`);
+        //définit qui est maitre et traitre
         const maitre = array[Math.floor(Math.random() * array.length)];
         const traitre = array[Math.floor(Math.random() * array.length)];
         mot1 = mots[Math.floor(Math.random() * mots.length)];
@@ -83,52 +83,74 @@ module.exports = {
             .get(traitre)
             .send(`Vous êtes le traître. Le mot est : ${mot1}`);
 			map.clear();
-      });
-	  const filter2 = m => m.content.includes(mot1);
-	  const collectormessage = interaction.channel.createMessageCollector({filter2});
-	  //let mrep = undefined;	 
-	  collectormessage.on('collect', m => {
-		if(m.content === mot1){
-			newMessage(m, "Vous avez trouvé ");
-    }
+      const filter2 = m => m.content.includes(mot1);
+	    const collectormessage = interaction.channel.createMessageCollector({filter2});
+	    
+      //collect les réponses 
+      collectormessage.on('collect', m => {
+	  	if(m.content === mot1){
+			  collectormessage.stop();
+        return newPollMessage(m, "Vous avez trouvé ", traitre);
+        return false;
+      }
 		});
+
+      });
+	  
     } catch (error) {
       console.log(error);
       message.reply(`Personne n'a voulu jouer`);
     }
 
-    /*message.awaitReactions({filter, max: 10, time: 5000})
-			.then(collected => {
-				const reaction = collected.first();
-				const user = colle;
-				console.log(user);
-				const channel = interaction.channel	
-				if (reaction.emoji.name === '👍'){
-					
-					message.edit('J ai changé d avis');
-					message.reactions.removeAll()
-						.catch(error => console.error('Erreur lors de la suppression de réactions', error));	
-
-				}
-				else if (reaction.emoji.name === '🚫'){
-					
-					message.reply('Fin');
-				}
-
-			})
-			.catch(collected => {
-				message.reply("Ouille");
-
-
-			});
-*/
   },
 };
 
-function newMessage(toReply, message){
-  const m = toReply.reply({content : 'Vous avez trouvé le mot', fetchReply: true})
-  .then((sent)=> {sent.react("👍").then(() => sent.react("🚫"));})
-  
+//crée le poll pour choisir si c'est un traitre ou non
+async function newPollMessage(toReply, message, traitre){
+  let m = await toReply.reply({content : `Vous avez trouvé le mot, maintenant votez si c'est le traitre ou non `, fetchReply: true})
+  m.react("👍").then(() => m.react("👎"));
+  let map = new Map()
+  const filter = (reaction, user) => {
+        return (
+          ["👍", "👎"].includes(reaction.emoji.name) && user.id != clientId //on ne récupère que les pouces des joueurs à ajouter
+        );
+      };
+      const collector = m.createReactionCollector({
+        filter,
+        time: 5000,
+        min: 1,
+		    dispose: false,
+      });
+    collector.on("collect", (reaction, user) => {
+		  let jsp = undefined; // conteneur de l'ensemble des id pour chaque clés
+		  if(map.get(reaction.emoji.name) != undefined){
+			  jsp = Array.from([]).concat(map.get(reaction.emoji.name)).concat(user.id) //si la clé est déjà associée
+		  }
+		  else {
+			  jsp = Array(user.id)
+		  }
+		  map.set(reaction.emoji.name, jsp);
+         console.log(`Reaction collected from ${reaction.emoji.name}, ${user}`);
+    });
+    collector.on("end", () =>{
+      const pour = new Set(map.get('👍')).size;
+      const contre = new Set(map.get('👎')).size;
+      const vote = (pour > contre) ? true : false;
+      motTrouve(toReply, vote, traitre);  
+      console.log(pour, contre, toReply.author.id)
+    });
+    map.clear()
 
+}
 
+//Affiche le message selon que l'on a bien deviné ou non
+function motTrouve(message, vote, traitre){
+    if(vote && message.author.id === traitre){
+        console.log("Gagné")
+        message.reply("Gagné")
+    }
+    else{
+      message.reply("Perdu");
+      console.log("perdu");
+    }
 }
