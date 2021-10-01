@@ -7,3 +7,8 @@ export const getAuthorTagByMessage = (message) => {
 
   return `<@${message.author.id}>`
 }
+
+export const getAuthorTagById = (id) => {
+
+  return `<@${id}>`
+}
