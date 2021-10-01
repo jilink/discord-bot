@@ -1,3 +1,5 @@
+import { getAuthorTagByMessage } from '../helper'
+
 const { SlashCommandBuilder } = require('@discordjs/builders');
 const { isMessageComponentDMInteraction } = require('discord-api-types/utils/v9');
 const { clientId, guildId, token } = require('../config.json');
@@ -115,7 +117,8 @@ module.exports = {
 
 //crée le poll pour choisir si c'est un traitre ou non
 async function newPollMessage(toReply, message, traitre){
-  let m = await toReply.reply({content : `Vous avez trouvé le mot, maintenant votez si c'est le traitre ou non `, fetchReply: true})
+  const author_tag = getAuthorTagByMessage(toReply)
+  let m = await toReply.reply({content : `${author_tag} Vous avez trouvé le mot, maintenant votez si c'est le traitre ou non `, fetchReply: true})
   m.react("👍").then(() => m.react("👎"));
   let map = new Map()
   const filter = (reaction, user) => {
