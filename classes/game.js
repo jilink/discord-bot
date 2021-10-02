@@ -31,6 +31,7 @@ class Game {
     this.mot = mots[Math.floor(Math.random() * mots.length)];
 
     this.sendWordToUser(this.maitre, PLAYER_TYPES.MAITRE);
+    this.sendWhoIsMaster()
     this.sendWordToUser(this.traitre);
 
     const filter2 = (m) => m.content.includes(this.mot);
@@ -41,7 +42,7 @@ class Game {
 
     //collect les réponses
     collectormessage.on("collect", (m) => {
-      if (m.content.includes(this.mot)) {
+      if (m.content === this.mot) {
         // je préfère includes au cas ou le mot est dans une phrase ou mal écrit
         collectormessage.stop();
         this.wordFound(m);
@@ -71,6 +72,11 @@ class Game {
     }
     user && this.client.users.cache.get(user).send(`${text}${this.mot}`);
   }
+
+  sendWhoIsMaster() {
+    this.interaction.channel.send(`${getAuthorTagById(this.maitre)} est le maitre du jeu ! Posez lui vos questions pour trouver le mot ;)`)
+  }
+
 
   //crée le poll pour choisir si c'est un traitre ou non
   async wordFound(messageToReply) {
