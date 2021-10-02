@@ -2,7 +2,37 @@ const { clientId, guildId, token } = require("../config.json");
 import { getAuthorTagById, getAuthorTagByMessage } from "../helper";
 
 // variable globale
-const mots = ["1"];
+const mots = [
+  "Apocalypse",
+  "Attraction",
+  "Aventurier",
+  "Bouillotte",
+  "Citrouille",
+  "Grenouille",
+  "Impossible",
+  "Labyrinthe",
+  "Boxe",
+  "Cerf",
+  "Cire",
+  "Dame",
+  "Dent",
+  "Drap",
+  "Dune",
+  "Joue",
+  "Logo",
+  "Lune",
+  "Lynx",
+  "Mine",
+  "Mûre",
+  "Ours",
+  "Rhum",
+  "Rock",
+  "Seau",
+  "Test",
+  "Trou",
+  "Vert",
+  "Alex",
+];
 const PLAYER_TYPES = {
   PLAYER: "PLAYER",
   MAITRE: "MASTER",
@@ -13,13 +43,15 @@ class Game {
     this.players = players;
     this.client = client;
     this.interaction = interaction;
-    this.maitreIndex = Math.floor(Math.random() * this.players.length)
+    this.maitreIndex = Math.floor(Math.random() * this.players.length);
     this.maitre = this.players[this.maitreIndex];
     this.traitreListe = this.players.slice();
-    this.traitreListe.splice(this.maitreIndex,1);
-    console.log("Liste de joueurs",this.players);
+    this.traitreListe.splice(this.maitreIndex, 1);
+    this.mots = mots;
+
+    console.log("Liste de joueurs", this.players);
     console.log("Nom du maitre", this.maitre);
-    console.log("Liste de traitre",this.traitreListe);
+    console.log("Liste de traitre", this.traitreListe);
     this.traitre =
       this.traitreListe[Math.floor(Math.random() * this.traitreListe.length)];
 
@@ -28,10 +60,11 @@ class Game {
 
   init(turnCount = 0) {
     this.turnCount = turnCount + 1;
-    this.mot = mots[Math.floor(Math.random() * mots.length)];
+    const wordIndex = Math.floor(Math.random() * mots.length); 
+    this.mot = this.mots.splice(wordIndex, 1)[0]
 
     this.sendWordToUser(this.maitre, PLAYER_TYPES.MAITRE);
-    this.sendWhoIsMaster()
+    this.sendWhoIsMaster();
     this.sendWordToUser(this.traitre);
 
     const filter2 = (m) => m.content.includes(this.mot);
@@ -42,7 +75,7 @@ class Game {
 
     //collect les réponses
     collectormessage.on("collect", (m) => {
-      if (m.content === this.mot) {
+      if (this.client.user.id !== m.author.id && this.wordNormalizer(m.content).includes(this.wordNormalizer(this.mot))) {
         // je préfère includes au cas ou le mot est dans une phrase ou mal écrit
         collectormessage.stop();
         this.wordFound(m);
@@ -74,9 +107,12 @@ class Game {
   }
 
   sendWhoIsMaster() {
-    this.interaction.channel.send(`${getAuthorTagById(this.maitre)} est le maitre du jeu ! Posez lui vos questions pour trouver le mot ;)`)
+    this.interaction.channel.send(
+      `${getAuthorTagById(
+        this.maitre
+      )} est le maitre du jeu ! Posez lui vos questions pour trouver le mot ;)`
+    );
   }
-
 
   //crée le poll pour choisir si c'est un traitre ou non
   async wordFound(messageToReply) {
@@ -149,6 +185,12 @@ class Game {
 
   isTraitorMessage(message) {
     return message.author.id === this.traitre;
+  }
+
+  wordNormalizer(word) {
+    const str = word.toLowerCase();
+    str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    return str;
   }
 }
 
