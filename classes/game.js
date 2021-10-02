@@ -13,9 +13,15 @@ class Game {
     this.players = players;
     this.client = client;
     this.interaction = interaction;
-    this.maitre = this.players[Math.floor(Math.random() * this.players.length)];
+    this.maitreIndex = Math.floor(Math.random() * this.players.length)
+    this.maitre = this.players[this.maitreIndex];
+    this.traitreListe = this.players.slice();
+    this.traitreListe.splice(this.maitreIndex,1);
+    console.log("Liste de joueurs",this.players);
+    console.log("Nom du maitre", this.maitre);
+    console.log("Liste de traitre",this.traitreListe);
     this.traitre =
-      this.players[Math.floor(Math.random() * this.players.length)];
+      this.traitreListe[Math.floor(Math.random() * this.traitreListe.length)];
 
     this.init();
   }
@@ -30,7 +36,7 @@ class Game {
     const filter2 = (m) => m.content.includes(this.mot);
     const collectormessage = this.interaction.channel.createMessageCollector({
       filter2,
-      time: 10000,
+      time: 30000,
     });
 
     //collect les réponses
@@ -45,7 +51,7 @@ class Game {
 
     collectormessage.on("end", (m, reason) => {
       if (reason === "time") {
-        message.reply("Perdu le temps est écoulé");
+        this.interaction.channel.send("Perdu le temps est écoulé");
         return false;
       }
     });
@@ -112,18 +118,6 @@ class Game {
     const channel = winnerMessage.channel;
     if (isAccused && this.isTraitorMessage(winnerMessage)) {
       channel.send("Les citoyens ont gagné, c'était bien le traitre !");
-      if (this.turnCount > 1) {
-        channel.send(
-          `ok j'abandone vous êtes vraiment trop nul le traitre c'était ${getAuthorTagById(
-            this.traitre
-          )}`
-        );
-        return false;
-      }
-      channel.send(
-        "Ce n'était pas le traitre ! Allez on continue il faut le trouver ce con. NOUVEAU MOT!"
-      );
-      this.init(this.turnCount);
       return true;
     } else if (isAccused) {
       if (this.turnCount > 1) {
